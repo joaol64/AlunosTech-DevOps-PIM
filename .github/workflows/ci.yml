@@ -43,34 +43,50 @@ jobs:
           path: ./publicacao/
           if-no-files-found: error
       
-  docker-test:
+    docker-test:
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Baixar codigo
+          uses: actions/checkout@v4
+
+        - name: Construir imagem Docker
+          run: docker build -t alunostech-api ./AlunosTech.Api
+
+        - name: Iniciar container
+          run: docker run -d --name alunostech-api -p 8080:8080 alunostech-api
+
+        - name: Testar disponibilidade da API
+          run: |
+            for i in {1..15}; do
+              if curl --fail --silent http://localhost:8080/health; then
+                echo ""
+                echo "API funcionando no container!"
+                exit 0
+              fi
+              sleep 2
+            done
+            docker logs alunostech-api
+            exit 1
+
+        - name: Encerrar container
+          if: always()
+          run: docker rm -f alunostech-api || true
+
+    
+  kubernetes-validation:
     runs-on: ubuntu-latest
 
     steps:
       - name: Baixar codigo
         uses: actions/checkout@v4
 
-      - name: Construir imagem Docker
-        run: docker build -t alunostech-api ./AlunosTech.Api
+      - name: Instalar kubectl
+        uses: azure/setup-kubectl@v4
 
-      - name: Iniciar container
-        run: docker run -d --name alunostech-api -p 8080:8080 alunostech-api
-
-      - name: Testar disponibilidade da API
+      - name: Validar estrutura YAML
         run: |
-          for i in {1..15}; do
-            if curl --fail --silent http://localhost:8080/health; then
-              echo ""
-              echo "API funcionando no container!"
-              exit 0
-            fi
-            sleep 2
-          done
-          docker logs alunostech-api
-          exit 1
+          python -c "import yaml; docs = list(yaml.safe_load_all(open('k8s/deployment.yaml', encoding='utf-8'))); assert len(docs) == 2; assert {d['kind'] for d in docs} == {'Deployment', 'Service'}; print('Manifestos YAML validos: Deployment e Service')"
 
-      - name: Encerrar container
-        if: always()
-        run: docker rm -f alunostech-api || true
 
 
