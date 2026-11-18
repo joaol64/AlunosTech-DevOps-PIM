@@ -32,3 +32,14 @@ jobs:
 
       - name: Executar testes
         run: dotnet test AlunosTech.Tests/AlunosTech.Tests.csproj --configuration Release --no-build
+      
+      - name: Publicar aplicacao
+        run: dotnet publish AlunosTech.Desktop/AlunosTech.Desktop.csproj --configuration Release --output ./publicacao
+
+      - name: Armazenar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlunosTech-Desktop
+          path: ./publicacao/
+          if-no-files-found: error
+
