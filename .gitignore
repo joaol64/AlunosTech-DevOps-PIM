@@ -1,0 +1,15 @@
+
+# Arquivos de compilacao .NET
+**/bin/
+**/obj/
+
+# Arquivos temporarios do Visual Studio
+.vs/
+*.user
+*.suo
+
+# Arquivos temporarios do VS Code
+.vscode/
+
+# Logs
+*.log
